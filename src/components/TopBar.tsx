@@ -1,61 +1,49 @@
 import { useState } from "react";
-import { Search, ChevronDown, User, Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
-const TopBar = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+export interface Song {
+  name: string;
+  artist: string;
+  album: string;
+  image: string;
+  preview: string | null;
+}
+
+interface TopBarProps {
+  onResults: (results: Song[]) => void;
+}
+
+const TopBar = ({ onResults }: TopBarProps) => {
+  const [query, setQuery] = useState("");
+
+  const handleSearch = async () => {
+    if (!query) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/spotify/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      onResults(data); // <-- pass results up to Index.tsx
+    } catch (err) {
+      console.error("Search failed:", err);
+    }
+  };
 
   return (
-    <header className="fixed top-0 left-64 right-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border">
-      <div className="flex items-center justify-between p-4">
-        {/* Search */}
-        <div className="flex-1 max-w-md relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search for songs, artists, albums..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-muted/50 border-border focus:border-primary transition-colors"
-          />
-        </div>
-
-        {/* User Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 hover:bg-hover">
-              <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="font-medium">John Doe</span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 glass">
-            <DropdownMenuItem className="hover:bg-hover cursor-pointer">
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-hover cursor-pointer">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="hover:bg-hover cursor-pointer text-destructive">
-              <LogOut className="w-4 h-4 mr-2" />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </header>
+    <div className="relative flex items-center p-2 border-b">
+      <input
+        type="text"
+        placeholder="Search for songs..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+        className="border rounded p-2 w-full"
+      />
+      <button
+        onClick={handleSearch}
+        className="ml-2 p-2 bg-blue-500 text-white rounded"
+      >
+        Search
+      </button>
+    </div>
   );
 };
 
